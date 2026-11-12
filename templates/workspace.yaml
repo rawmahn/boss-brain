@@ -1,0 +1,10 @@
+# Who this workspace belongs to and where its core comes from. Read by core/scripts.
+owner: {{OWNER}}
+github: {{GITHUB}}
+name: {{NAME}}            # this workspace's name (the maintainer's sync branch is sync/<name>)
+core:
+  remote: https://github.com/rawmahn/command-center.git
+  branch: main
+  maintainer: false       # true only for whoever pushes core from this workspace
+# gdrive:
+#   remote: gdrive:Workspace   # rclone remote:folder for scripts/sync-gdrive.sh

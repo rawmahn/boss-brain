@@ -1,0 +1,30 @@
+# Registry of every repo this workspace touches. Read it before any git work.
+#
+# Fields:
+#   remote      git remote URL (clone source)
+#   path        local checkout, relative to the workspace root (gitignored)
+#   account     GitHub account to use
+#   branch      working branch (what changes go on / get merged into)
+#   pr_policy   how changes land:
+#     push-main      commit and push straight to `branch`, no PR needed
+#     pr-self-merge  open a PR, merge it yourself (no review needed)
+#     pr             open a PR, the owner reviews and merges
+#     push-branch    push a feature branch only, no PR, no merge
+#     fork-only      external repo: work on our fork; ask the owner before opening any upstream PR
+#     read-only      never push
+#   notes       optional gotchas: what deploys where, branches never to push, how to test
+#   tasks       true = a task repo: its issues are tasks (core/MANUAL.md, "Tasks"), next to this
+#               workspace's own. Its claim branches and card images live in that repo too.
+
+defaults:
+  account: {{GITHUB}}
+
+repos: {}
+  # example:
+  #   app:
+  #     remote: https://github.com/{{GITHUB}}/app.git
+  #     path: repos/app
+  #     branch: main
+  #     pr_policy: push-main
+  #     tasks: true
+  #     notes: A push to main deploys staging; prod deploys are manual and need the owner's OK.
