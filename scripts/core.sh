@@ -1,5 +1,5 @@
 #!/bin/bash
-# Keep the workspace's core/ (a git subtree of command-center) in sync with upstream.
+# Keep the workspace's core/ (a git subtree of Boss Brain) in sync with upstream.
 # See core/MANUAL.md, "Core".
 #
 #   scripts/core.sh pull            merge the latest upstream into core/ (squashed), re-link scripts and skills

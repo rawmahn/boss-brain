@@ -1,4 +1,6 @@
-# command-center
+# Boss Brain
+
+*Boss Brain is a code name.*
 
 A personal command center for working with coding agents (Claude Code, Codex, others): one private Git repo that sits above all your code repos and holds your notes, your repo registry, and a task queue that agents pick up on their own.
 
@@ -16,7 +18,7 @@ Needs `git`, `python3` (PyYAML recommended), and [`gh`](https://cli.github.com) 
 ```bash
 mkdir my-workspace && cd my-workspace && git init -b main
 git commit --allow-empty -m "Start workspace"
-git subtree add --prefix=core https://github.com/rawmahn/command-center.git main --squash
+git subtree add --prefix=core https://github.com/rawmahn/boss-brain.git main --squash
 core/init.sh --owner "Your Name" --github your-account
 git add -A && git commit -m "Set up workspace"
 gh repo create my-workspace --private --source . --push

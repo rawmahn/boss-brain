@@ -1,6 +1,6 @@
-# Command Center manual
+# Boss Brain manual
 
-The base manual for a personal command-center workspace: one repo that sits above all of a person's code repos. **Notes live in the workspace; code lives in the repos.** This file comes from [command-center](README.md), mounted in the workspace at `core/`. The workspace's own `CLAUDE.md` names the owner, adds their rules and **wins wherever the two disagree**.
+The base manual for a personal command-center workspace: one repo that sits above all of a person's code repos. **Notes live in the workspace; code lives in the repos.** This file comes from [Boss Brain](README.md), mounted in the workspace at `core/`. The workspace's own `CLAUDE.md` names the owner, adds their rules and **wins wherever the two disagree**.
 
 A workspace has three jobs:
 
@@ -15,7 +15,7 @@ A workspace has three jobs:
 | Path | Role |
 |---|---|
 | `CLAUDE.md` | The workspace's own manual: points here first, then the owner's rules, workstreams and recipes. `AGENTS.md` is a symlink to it |
-| `core/` | This core (a `git subtree` of command-center). Shared by everyone who uses it; see **Core** below before editing it |
+| `core/` | This core (a `git subtree` of Boss Brain). Shared by everyone who uses it; see **Core** below before editing it |
 | `workspace.yaml` | Owner name, GitHub account, where core comes from |
 | `repos.yaml` | Registry of every repo: remote, local path, account, working branch, `pr_policy`. **Read it before any git work.** |
 | `workers.yaml` | *(optional)* Execution engines for a dispatcher; its `workers:` keys are the allowed `worker:<engine>` pins |
@@ -123,12 +123,12 @@ Or pick one yourself: `scripts/task.sh claim <n>` (prints your claim id).
 
 `core/` is shared code. Most workspaces only **use** it:
 
-- **Update:** `scripts/core.sh pull` merges the latest command-center into `core/` (one squashed commit), then re-links new scripts and skills. Commit nothing else in that commit.
+- **Update:** `scripts/core.sh pull` merges the latest Boss Brain into `core/` (one squashed commit), then re-links new scripts and skills. Commit nothing else in that commit.
 - **Customize in your own layer, not in `core/`.** Your `CLAUDE.md` overrides this manual; your own skills and scripts sit next to the linked ones. Edits inside `core/` will conflict on the next pull.
-- **Contribute:** port the change into a fresh branch of the command-center repo (not your workspace history, so no private commits or messages travel) and open a PR there. Ask the owner first, as with any external repo.
+- **Contribute:** port the change into a fresh branch of the Boss Brain repo (not your workspace history, so no private commits or messages travel) and open a PR there. Ask the owner first, as with any external repo.
 
 A workspace whose `workspace.yaml` sets `core.maintainer: true` also **pushes** core from inside the workspace:
 
-- Commits that touch `core/` touch nothing else, and their messages are safe to publish: they become public commits in command-center.
-- `scripts/core.sh push` splits `core/` out of the workspace history, scans every outgoing commit message and diff for the terms in `.core-denylist` (private, one regex per line), and pushes to the `sync/<workspace>` branch of command-center, opening a PR. `scripts/core.sh diff` shows what is not upstream yet.
+- Commits that touch `core/` touch nothing else, and their messages are safe to publish: they become public commits in Boss Brain.
+- `scripts/core.sh push` splits `core/` out of the workspace history, scans every outgoing commit message and diff for the terms in `.core-denylist` (private, one regex per line), and pushes to the `sync/<workspace>` branch of Boss Brain, opening a PR. `scripts/core.sh diff` shows what is not upstream yet.
 - Merge those PRs with a **merge commit** (not squash or rebase), or the next push re-sends the same commits.
