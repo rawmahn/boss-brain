@@ -99,7 +99,7 @@ class GitRaceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             remote, a, b = [Path(d) / name for name in ("remote.git", "a", "b")]
             def git(*args):
-                return subprocess.run(["git", *map(str, args)], check=True, capture_output=True, text=True).stdout.strip()
+                return subprocess.run(["git", *map(str, args)], check=True, capture_output=True, text=True, stdin=subprocess.DEVNULL).stdout.strip()
             git("init", "--bare", remote)
             for root in (a, b):
                 git("init", root)
@@ -171,7 +171,7 @@ class MultiRepoTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             home, other, work = [Path(d) / n for n in ("home.git", "other.git", "work")]
             def git(*args):
-                return subprocess.run(["git", *map(str, args)], check=True, capture_output=True, text=True).stdout.strip()
+                return subprocess.run(["git", *map(str, args)], check=True, capture_output=True, text=True, stdin=subprocess.DEVNULL).stdout.strip()
             git("init", "--bare", home); git("init", "--bare", other); git("init", work)
             git("-C", work, "remote", "add", "origin", home)
             git("-C", work, "config", "user.name", "Lease test")
