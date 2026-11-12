@@ -3,7 +3,7 @@ owner: {{OWNER}}
 github: {{GITHUB}}
 name: {{NAME}}            # this workspace's name (the maintainer's sync branch is sync/<name>)
 core:
-  remote: https://github.com/rawmahn/command-center.git
+  remote: https://github.com/rawmahn/boss-brain.git
   branch: main
   maintainer: false       # true only for whoever pushes core from this workspace
 # gdrive:
