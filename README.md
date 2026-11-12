@@ -1,6 +1,15 @@
 # Boss Brain
 
+**The productivity harness for AI power users.** One Git repo turns your coding agents into a team that runs itself: they pick up tasks, do them end to end, and come to you only when a decision is really yours.
+
+- **Completely free.** MIT-licensed. No subscription, no account, no server to host.
+- **Pure Git.** Your notes, rules, task queue and agent claims are plain files, commits and GitHub issues. No database, no SaaS, no lock-in: clone the repo and you have everything.
+- **Makes your life easier.** Stop re-explaining your setup in every session. Every agent reads the same manual and works from the same queue, and you get short decision cards you can answer at a glance, even from your phone.
+- **Works with the agents you already use:** Claude Code, Codex, and any agent that reads `CLAUDE.md`/`AGENTS.md` and can run a shell.
+
 *Boss Brain is a code name.*
+
+## What it is
 
 A personal command center for working with coding agents (Claude Code, Codex, others): one private Git repo that sits above all your code repos and holds your notes, your repo registry, and a task queue that agents pick up on their own.
 
