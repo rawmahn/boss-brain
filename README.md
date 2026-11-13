@@ -22,7 +22,13 @@ Your workspace mounts this repo at `core/` as a [git subtree](https://github.com
 
 ## Start a workspace
 
-Needs `git`, `python3` (PyYAML recommended), and [`gh`](https://cli.github.com) signed in.
+**Guided:** tell your agent (Claude Code, Codex, ...)
+
+> Set up Boss Brain for me using https://raw.githubusercontent.com/rawmahn/boss-brain/main/SETUP.md
+
+It checks the prerequisites, runs every command, and sets up your rules, repos and a first task with you, one question at a time ([SETUP.md](SETUP.md)).
+
+**By hand:** needs `git`, `python3` (PyYAML recommended), and [`gh`](https://cli.github.com) signed in.
 
 ```bash
 mkdir my-workspace && cd my-workspace && git init -b main
@@ -49,7 +55,7 @@ Customize in your own `CLAUDE.md`, skills and scripts rather than inside `core/`
 
 ## Contributing
 
-Port the change into a branch of this repo (rather than pushing your workspace history, which carries your private commits) and open a PR. Maintainers who edit `core/` inside their workspace use `scripts/core.sh push`, described in [MANUAL.md](MANUAL.md#core).
+Fork this repo, port the change into a fresh branch of your fork (rather than pushing your workspace history, which carries your private commits) and open a PR here. Maintainers who edit `core/` inside their workspace use `scripts/core.sh push`, described in [MANUAL.md](MANUAL.md#core).
 
 Tests: `python3 -m unittest discover -s scripts -p 'test_*.py'`.
 
