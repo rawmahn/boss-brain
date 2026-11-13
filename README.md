@@ -1,6 +1,6 @@
 # Boss Brain
 
-**The productivity harness for AI power users.** One Git repo turns your coding agents into a team that runs itself: they pick up tasks, do them end to end, and come to you only when a decision is really yours.
+**Your personal management office for working with AI.** One private Git repo that remembers for you, knows all your projects, and runs your coding agents as a team that comes to you only when a decision is really yours.
 
 - **Completely free.** MIT-licensed. No subscription, no account, no server to host.
 - **Pure Git.** Your notes, rules, task queue and agent claims are plain files, commits and GitHub issues. No database, no SaaS, no lock-in: clone the repo and you have everything.
@@ -9,7 +9,18 @@
 
 *Boss Brain is a code name.*
 
-## What it is
+## The idea
+
+Boss Brain is one place where everything comes together: part memory, part knowledge base, part project office.
+
+- **Just talk to it.** Open a session (Claude Code, Codex, ...) in the workspace and start on any of your projects right away. The agent has already read the manual and knows your repos, your rules and where things stand. You don't re-explain anything.
+- **It keeps notes so you don't have to.** As you talk, the agent writes down what matters: decisions, your own takes, gotchas, notes on people, a daily log. You don't have to track every conversation, because the next session picks up from the files. What already lives in a ticket, PR or doc gets a link, not a copy.
+- **The real work happens elsewhere.** Code stays in its own repos. The workspace knows all of them, sends changes into them, hands tasks to agents and checks what comes back.
+- **Dead simple.** Plain Markdown files, plain Git, plain GitHub issues. No app to install, nothing to buy, no extra service. If you can clone a repo, you have the whole thing.
+
+On top of that sits the agent team: a shared task queue that agents pick up on their own, and short decision cards when they need you.
+
+## What's inside
 
 A personal command center for working with coding agents (Claude Code, Codex, others): one private Git repo that sits above all your code repos and holds your notes, your repo registry, and a task queue that agents pick up on their own.
 
