@@ -15,6 +15,9 @@
 #   notes       optional gotchas: what deploys where, branches never to push, how to test
 #   tasks       true = a task repo: its issues are tasks (core/MANUAL.md, "Tasks"), next to this
 #               workspace's own. Its claim branches and card images live in that repo too.
+#               assigned = a task repo shared with others: your agents take only the issues
+#               assigned to you (`github` in workspace.yaml); unassigned ones wait for someone
+#               to assign them (core/MANUAL.md, "Assignee = whose task it is").
 
 defaults:
   account: {{GITHUB}}
@@ -26,5 +29,5 @@ repos: {}
   #     path: repos/app
   #     branch: main
   #     pr_policy: push-main
-  #     tasks: true
+  #     tasks: true          # or `assigned` in a repo shared with others: only issues assigned to you
   #     notes: A push to main deploys staging; prod deploys are manual and need the owner's OK.
