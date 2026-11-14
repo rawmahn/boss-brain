@@ -2,10 +2,16 @@
 """Task system: GitHub issues in the task repos, claimed through `claim/<number>` branches.
 
 Task repos are this workspace's own repo (the home repo, `origin`) plus every
-repos.yaml entry with `tasks: true`. A task is addressed by its ref: `81` (or `#81`)
-for the home repo, `<repo>#81` for another task repo (`<repo>` = its repos.yaml name).
-Everything about a task lives in the task's own repo, so collaborators on that repo
-see all of it: the issue, its claim branch and its card images (branch `cards`).
+repos.yaml entry with `tasks: true` or `tasks: assigned`. A task is addressed by its ref:
+`81` (or `#81`) for the home repo, `<repo>#81` for another task repo (`<repo>` = its
+repos.yaml name). Everything about a task lives in the task's own repo, so collaborators
+on that repo see all of it: the issue, its claim branch and its card images (branch `cards`).
+
+An issue's GitHub assignee is who it belongs to: that person's agents work on it and its
+decision card waits on them. This workspace's agents pick up only the owner's issues
+(`github` in workspace.yaml): those assigned to them, plus unassigned ones in the home repo
+and in `tasks: true` repos. In a `tasks: assigned` repo (shared with collaborators) an
+unassigned issue belongs to nobody yet and waits until someone assigns it.
 
 Issues hold the task (Goal / Done when / Plan / Next; Log as comments). Every open issue
 carries one status label (see OPEN); closing it means done or dropped. A claim says
@@ -117,8 +123,9 @@ def repo():
     return m.group(1)
 
 
-def registry():
-    """{name: owner/repo} for the repos.yaml entries marked `tasks: true` (the task repos besides home)."""
+def task_entries():
+    """{name: (owner/repo, pickup)} for the repos.yaml entries marked `tasks: true` (pickup "all")
+    or `tasks: assigned` (pickup "assigned"): the task repos besides home."""
     path = os.path.join(ROOT, "repos.yaml")
     if not os.path.exists(path):
         return {}
@@ -137,13 +144,54 @@ def registry():
                 continue
             m = re.match(r"^    (remote|tasks):\s*(\S+)", line)
             if m and cur is not None:
-                cur[m.group(1)] = m.group(2) == "true" if m.group(1) == "tasks" else m.group(2)
+                cur[m.group(1)] = {"true": True, "false": False}.get(m.group(2), m.group(2)) if m.group(1) == "tasks" else m.group(2)
     out = {}
     for name, e in entries.items():
         m = re.search(r"github\.com[:/]([^/]+/[^/]+?)(?:\.git)?/?$", str((e or {}).get("remote", "")))
-        if (e or {}).get("tasks") is True and m:
-            out[name] = m.group(1)
+        mode = {True: "all", "assigned": "assigned"}.get((e or {}).get("tasks"))
+        if mode and m:
+            out[name] = (m.group(1), mode)
     return out
+
+
+def registry():
+    """{name: owner/repo} of the task repos besides home."""
+    return {name: r for name, (r, _) in task_entries().items()}
+
+
+def pickup(r):
+    """Which unassigned issues of task repo r (None = home) are the owner's: "all", or "assigned"
+    (a shared repo, where an issue is someone's only once it is assigned)."""
+    return "all" if r is None else task_entries().get(r, (None, "all"))[1]
+
+
+_ME = []
+
+
+def me():
+    """The owner's GitHub login (workspace.yaml `github`, else the signed-in gh user), lowercase."""
+    if not _ME:
+        login = os.environ.get("TASK_OWNER") or ""
+        if not login:
+            sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+            import workspace
+            login = str(workspace.get(ROOT, "github") or "")
+        if not login:
+            login = run("gh", "api", "user", "--jq", ".login", check=False).stdout.strip()
+        _ME.append(login.lower())
+    return _ME[0]
+
+
+def assignees(issue):
+    """Logins the issue is assigned to (lowercase); empty = unassigned."""
+    return [a["login"].lower() for a in issue.get("assignees") or [] if a and a.get("login")]
+
+
+def mine(issue):
+    """Is the issue the owner's? Assigned to them, or unassigned outside a `tasks: assigned` repo.
+    An issue assigned to someone else is theirs: their agents work on it, never ours."""
+    a = assignees(issue)
+    return me() in a if a else pickup(issue.get("_repo")) == "all"
 
 
 def task_repos():
@@ -157,7 +205,7 @@ def full(r):
         return repo()
     reg = registry()
     if r not in reg:
-        raise SystemExit(f"{r} is not a task repo (repos.yaml: tasks: true)")
+        raise SystemExit(f"{r} is not a task repo (repos.yaml: tasks: true / assigned)")
     return reg[r]
 
 
@@ -216,7 +264,7 @@ def parse_ref(text):
     home = repo()
     if name.lower() in (home.lower(), home.split("/")[1].lower()):
         return n
-    raise SystemExit(f"{name} is not a task repo (repos.yaml: tasks: true)")
+    raise SystemExit(f"{name} is not a task repo (repos.yaml: tasks: true / assigned)")
 
 
 def api(path, method="GET", data=None, paginate=False, repo_name=None):
@@ -320,15 +368,15 @@ def by_prio(xs):
 
 
 def candidates(all_issues, c, who="dev"):
-    """Ready issues with no active claim, including expired leases, in pick-up order."""
-    return by_prio(i for i in all_issues if not active_claim(key(i), c) and status(i, c) == "ready" and agent(i) == who)
+    """The owner's ready issues with no active claim, including expired leases, in pick-up order."""
+    return by_prio(i for i in all_issues if not active_claim(key(i), c) and status(i, c) == "ready" and agent(i) == who and mine(i))
 
 
 def due_holds(all_issues, c, who="dev"):
-    """On-hold issues without active leases whose condition is due for a re-check."""
+    """The owner's on-hold issues without active leases whose condition is due for a re-check."""
     today = datetime.date.today().isoformat()
     return by_prio(i for i in all_issues if not active_claim(key(i), c) and status(i, c) == "on-hold" and agent(i) == who
-                   and (field(i, "Check after") or today) <= today)
+                   and mine(i) and (field(i, "Check after") or today) <= today)
 
 
 def set_status(issue, st, waiting_on=None, check_after=None, keep_body=False):
@@ -430,7 +478,7 @@ def assignment_guard(n, who=None, issue=None, require_claim=False):
     if issue is not None:
         pins = [l[7:] for l in labels(issue) if l.startswith("worker:")]
         ws = os.environ.get("AGENT_WORKSTREAM")
-        if (issue["state"] != "open" or status(issue, {}) != "ready" or agent(issue) != "dev"
+        if (issue["state"] != "open" or status(issue, {}) != "ready" or agent(issue) != "dev" or not mine(issue)
                 or (pins and pins != [worker]) or (ws and not set(ws.split(",")) <= set(workstreams(issue)))):
             raise SystemExit("assigned issue is no longer ready for this worker; do not change it")
     if require_claim:
@@ -463,7 +511,8 @@ def cmd_list(_):
             notes.append(f"on {field(i, 'Waiting on') or '?'}" + (f", check {ca}" if ca else ""))
         if claimed(n, c):
             notes.append(f"{'STALE ' if c[n][3] > STALE_HOURS else ''}claimed by {c[n][2]}, {c[n][3]:.1f}h ago")
-        tags = " ".join(sorted(labels(i) - set(OPEN) - {"p1", "p2", "p3"}))
+        tags = " ".join(sorted(labels(i) - set(OPEN) - {"p1", "p2", "p3"})
+                        + [f"@{x}" for x in assignees(i)] + ([] if assignees(i) or mine(i) else ["unassigned"]))
         print(f"{ref(n):<5} {s:13} p{prio(i)}  {i['title']}" + (f"  [{tags}]" if tags else "") + (f"  ({'; '.join(notes)})" if notes else ""))
 
 
@@ -559,7 +608,8 @@ def cmd_new(a):
     ws = [w for w in a.ws if not r or w.lower() != r.lower()]  # the repo already says it
     if a.worker:
         ensure_worker_labels(r)
-    data = {"title": a.title, "body": BODY,
+    owners = getattr(a, "assignee", None) or ([me()] if pickup(r) == "assigned" else [])  # a shared repo: the owner's unless told otherwise
+    data = {"title": a.title, "body": BODY, **({"assignees": owners} if owners else {}),
             "labels": ["backlog" if a.backlog else "ready", f"p{a.priority}"] + [f"ws:{w}" for w in ws]
             + ([f"agent:{a.agent}"] if a.agent != "dev" else [])
             + ([f"worker:{a.worker}"] if a.worker else [])}
@@ -574,6 +624,20 @@ def cmd_assign(a):
     if names != labels(issue):
         iapi(a.number, "", "PATCH", {"labels": sorted(names)})
     print(f"{ref(a.number)} is for {a.agent}")
+
+
+def cmd_assignee(a):
+    """Give an issue to a person (its GitHub assignee): `me`, a login, or `none` (unassigned)."""
+    issue = iapi(a.number)
+    login = {"me": me(), "none": ""}.get(a.login, a.login)
+    current = [x["login"] for x in issue.get("assignees") or []]
+    if current:
+        iapi(a.number, "/assignees", "DELETE", {"assignees": current})
+    if login:
+        out = iapi(a.number, "/assignees", "POST", {"assignees": [login]})
+        if login.lower() not in [x["login"].lower() for x in out.get("assignees") or []]:
+            raise SystemExit(f"GitHub did not assign {login} (not a collaborator on {full(split(a.number)[0])}?)")
+    print(f"{ref(a.number)} belongs to {('@' + login) if login else 'nobody (unassigned)'}")
 
 
 def cmd_worker(a):
@@ -649,6 +713,7 @@ def main():
     n.add_argument("--agent", choices=AGENTS, default="dev")
     n.add_argument("--worker", choices=WORKERS, help="strict engine pin; omitted = automatic")
     n.add_argument("--repo", help="task repo (repos.yaml name); default: the task repo a --ws names, else home")
+    n.add_argument("--assignee", action="append", default=[], help="whose task (GitHub login); default: the owner in a `tasks: assigned` repo, else nobody")
     n.set_defaults(fn=cmd_new)
     c = sub.add_parser("claim"); c.add_argument("number", type=parse_ref); c.add_argument("--as", dest="who")
     c.add_argument("--steal", action="store_true", help="compatibility flag; stale claims are reclaimed automatically"); c.set_defaults(fn=cmd_claim)
@@ -665,6 +730,8 @@ def main():
         x.add_argument("--card", help="decision card file (- = stdin), required with in-review")
     asg = sub.add_parser("assign"); asg.add_argument("number", type=parse_ref); asg.add_argument("agent", choices=AGENTS)
     asg.set_defaults(fn=cmd_assign)
+    ow = sub.add_parser("assignee", help="whose task it is: me, a GitHub login, or none")
+    ow.add_argument("number", type=parse_ref); ow.add_argument("login"); ow.set_defaults(fn=cmd_assignee)
     w = sub.add_parser("worker"); w.add_argument("number", type=parse_ref); w.add_argument("worker", choices=WORKERS + ["auto"])
     w.set_defaults(fn=cmd_worker)
     sub.add_parser("prune").set_defaults(fn=cmd_prune)

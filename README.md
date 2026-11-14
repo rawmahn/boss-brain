@@ -25,7 +25,7 @@ On top of that sits the agent team: a shared task queue that agents pick up on t
 A personal command center for working with coding agents (Claude Code, Codex, others): one private Git repo that sits above all your code repos and holds your notes, your repo registry, and a task queue that agents pick up on their own.
 
 - **A manual for agents** ([MANUAL.md](MANUAL.md)): how the workspace is laid out, standing rules, how changes land in each repo.
-- **A task queue on GitHub issues** (`scripts/task.sh`): statuses as labels, race-safe claims as commits on `claim/<n>` branches, decision cards when an agent needs your answer. One queue across the workspace and any repo marked `tasks: true`.
+- **A task queue on GitHub issues** (`scripts/task.sh`): statuses as labels, race-safe claims as commits on `claim/<n>` branches, decision cards when an agent needs your answer. One queue across the workspace and any repo marked `tasks: true`; in a repo shared with others (`tasks: assigned`) each person's agents take only the issues assigned to them.
 - **Repo registry** (`repos.yaml` + `scripts/sync-repos.sh`): every repo with its working branch and `pr_policy`.
 - **Skills**: `autopilot` (do the next task end to end, unattended) and `help-human` (turn a fuzzy idea into a plan, one question at a time).
 

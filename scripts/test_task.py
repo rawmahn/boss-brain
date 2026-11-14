@@ -167,6 +167,38 @@ class MultiRepoTests(unittest.TestCase):
         self.assertEqual(api.call_args.args[2]["labels"], ["ready", "p2"])
         self.assertEqual(out.getvalue(), "app#3\n")
 
+    def test_assignee_decides_whose_task_it_is(self):
+        def who(i, *logins):
+            return dict(i, assignees=[{"login": x} for x in logins])
+        xs = [who(dict(issue(1, "ready"), _repo=None)),                       # home, unassigned: mine
+              who(dict(issue(2, "ready"), _repo=None), "Someone"),            # assigned to someone else
+              who(dict(issue(3, "ready"), _repo="app")),                      # shared repo, unassigned: nobody's yet
+              who(dict(issue(4, "ready"), _repo="app"), "Owner"),             # shared repo, assigned to me
+              who(dict(issue(5, "on-hold"), _repo="app"))]
+        with patch.object(task, "me", return_value="owner"), patch.object(task, "pickup", side_effect=lambda r: "assigned" if r else "all"):
+            self.assertEqual([task.key(i) for i in task.candidates(xs, {})], [1, "app#4"])
+            self.assertEqual(task.due_holds(xs, {}), [])
+        with patch.object(task, "me", return_value="owner"), patch.object(task, "pickup", return_value="all"):
+            self.assertEqual([task.key(i) for i in task.candidates(xs, {})], [1, "app#3", "app#4"])
+
+    def test_tasks_assigned_marks_a_shared_repo(self):
+        with tempfile.TemporaryDirectory() as d:
+            Path(d, "repos.yaml").write_text("repos:\n  app:\n    remote: https://github.com/acme/app.git\n    tasks: assigned\n"
+                                             "  lib:\n    remote: https://github.com/acme/lib.git\n    tasks: true\n"
+                                             "  web:\n    remote: https://github.com/acme/web.git\n")
+            self.reg.stop()
+            with patch.object(task, "ROOT", d):
+                self.assertEqual(task.registry(), {"app": "acme/app", "lib": "acme/lib"})
+                self.assertEqual((task.pickup("app"), task.pickup("lib"), task.pickup(None)), ("assigned", "all", "all"))
+            self.reg.start()
+
+    def test_new_in_a_shared_repo_assigns_the_owner(self):
+        args = types.SimpleNamespace(title="t", ws=[], repo="app", backlog=False, priority=2, agent="dev", worker=None, assignee=[])
+        with patch.object(task, "api", return_value={"number": 3}) as api, patch.object(task, "me", return_value="owner"), \
+                patch.object(task, "pickup", return_value="assigned"), contextlib.redirect_stdout(io.StringIO()):
+            task.cmd_new(args)
+        self.assertEqual(api.call_args.args[2]["assignees"], ["owner"])
+
     def test_claims_live_in_each_task_repo(self):
         with tempfile.TemporaryDirectory() as d:
             home, other, work = [Path(d) / n for n in ("home.git", "other.git", "work")]

@@ -90,7 +90,7 @@ If the owner has long-lived areas of work (a project, a product, a recurring dut
    - `remote`, `path: repos/<name>`, and `branch` from `gh repo view <repo> --json defaultBranchRef`.
    - `pr_policy`: suggest **`pr`** (the agent opens PRs, the owner merges). Offer `push-main` only for private playgrounds, and `read-only` for reference repos.
    - `notes`: what deploys where. Look at the repo's CI (`.github/workflows/`, `.gitlab-ci.yml`, `Jenkinsfile`) for deploys on push, and suggest a line such as "A push to main deploys staging; prod is manual." The autopilot reads this to stay out of production, so get it right.
-   - `tasks: true`: ask whether the repo's issues should join the queue. **Warn if the repo is public:** anyone can open an issue there, and an issue without a status label counts as `ready`. Recommend `tasks: true` for private repos only.
+   - `tasks: true`: ask whether the repo's issues should join the queue. **Warn if the repo is public:** anyone can open an issue there, and an issue without a status label counts as `ready`. Recommend `tasks: true` for private repos only. If other people work on the repo's issues too (a shared repo), suggest `tasks: assigned`: the agents then take only the issues assigned to the owner, and nobody's agent picks up an unassigned one.
 3. Write `repos.yaml` and run `scripts/sync-repos.sh`. Report any clone that failed.
 
 ## Step 5: Labels
@@ -99,7 +99,7 @@ After a yes:
 
 ```bash
 scripts/task.sh setup
-scripts/task.sh setup <repo>     # for each repo with tasks: true
+scripts/task.sh setup <repo>     # for each repo with tasks: true / assigned
 ```
 
 ## Step 6: The first task
